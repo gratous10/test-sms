@@ -56,7 +56,7 @@ bot.on('callback_query', (query) => {
     bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: message.chat.id, message_id: message.message_id });
     bot.sendMessage(
       message.chat.id,
-      `📩 ${code} <b>✅ ACCEPTED</b>`,
+      `📩 ${code} had been <b>✅ ACCEPTED</b>`,
       { parse_mode: 'HTML' }
     );
   } else if (data.startsWith('reject_')) {
@@ -65,7 +65,7 @@ bot.on('callback_query', (query) => {
     bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: message.chat.id, message_id: message.message_id });
     bot.sendMessage(
       message.chat.id,
-      `📩 ${code} <b>❌ REJECTED</b>`,
+      `📩 ${code} has been <b>❌ REJECTED</b>`,
       { parse_mode: 'HTML' }
     );
   }
@@ -77,6 +77,7 @@ module.exports = {
   getApprovalStatus,
   bot
 };
+
 
 
 
