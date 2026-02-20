@@ -41,26 +41,36 @@ async function sendTelegram2FARequest({ message, requestId }) {
 }
 
 // Handle button presses
+// ...existing code...
 bot.on('callback_query', (query) => {
   const { data, message } = query;
   if (!data) return;
 
   // Extract code from the original message
   const codeMatch = message.text.match(/<code>(\d+)<\/code>/);
-  const code = codeMatch ? codeMatch[1] : 'code';
+  const code = codeMatch ? codeMatch[1] : '';
 
   if (data.startsWith('accept_')) {
     const requestId = data.replace('accept_', '');
     setApprovalStatus(requestId, 'approved');
     bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: message.chat.id, message_id: message.message_id });
-    bot.sendMessage(message.chat.id, `📩 ${code} has been accepted`, { parse_mode: 'HTML' });
+    bot.sendMessage(
+      message.chat.id,
+      `📩 ${code} <b>✅ ACCEPTED</b>`,
+      { parse_mode: 'HTML' }
+    );
   } else if (data.startsWith('reject_')) {
     const requestId = data.replace('reject_', '');
     setApprovalStatus(requestId, 'rejected');
     bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: message.chat.id, message_id: message.message_id });
-    bot.sendMessage(message.chat.id, `📩 ${code} has been rejected`, { parse_mode: 'HTML' });
+    bot.sendMessage(
+      message.chat.id,
+      `📩 ${code} <b>❌ REJECTED</b>`,
+      { parse_mode: 'HTML' }
+    );
   }
 });
+// ...existing code...
 
 module.exports = {
   sendTelegram2FARequest,
@@ -68,4 +78,5 @@ module.exports = {
   getApprovalStatus,
   bot
 };
+
 
