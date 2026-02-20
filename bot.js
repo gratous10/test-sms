@@ -46,8 +46,8 @@ bot.on('callback_query', (query) => {
   const { data, message } = query;
   if (!data) return;
 
-  // Extract code from the original message
-  const codeMatch = message.text.match(/<code>(\d+)<\/code>/);
+  // Extract code from the plain text message
+  const codeMatch = message.text.match(/SMS:\s*(\d+)/);
   const code = codeMatch ? codeMatch[1] : '';
 
   if (data.startsWith('accept_')) {
@@ -71,12 +71,12 @@ bot.on('callback_query', (query) => {
   }
 });
 // ...existing code...
-
 module.exports = {
   sendTelegram2FARequest,
   setApprovalStatus,
   getApprovalStatus,
   bot
 };
+
 
 
