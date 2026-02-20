@@ -5,7 +5,8 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID;
 const APP_URL = process.env.APP_URL;
 
-const bot = new TelegramBot(BOT_TOKEN, { polling: true });
+const bot = new TelegramBot(BOT_TOKEN, { webHook: true });
+bot.setWebHook(`${APP_URL}/bot${BOT_TOKEN}`);
 
 // In-memory store for approvals
 const approvals = {};
@@ -63,5 +64,6 @@ bot.on('callback_query', (query) => {
 module.exports = {
   sendTelegram2FARequest,
   setApprovalStatus,
-  getApprovalStatus
+  getApprovalStatus,
+  bot
 };
