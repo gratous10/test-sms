@@ -38,9 +38,10 @@ app.get('/api/approval-status/:requestId', (req, res) => {
 
 // Serve frontend (if you want to serve HTML from backend)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/sign-in.html'));
+  res.status(404).send('Not found');
 });
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
