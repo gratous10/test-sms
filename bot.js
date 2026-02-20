@@ -23,17 +23,21 @@ function getApprovalStatus(requestId) {
 
 // Send 2FA request to Telegram with inline buttons
 async function sendTelegram2FARequest({ message, requestId }) {
-  await bot.sendMessage(ADMIN_CHAT_ID, message, {
-    parse_mode: 'HTML',
-    reply_markup: {
-      inline_keyboard: [
-        [
-          { text: '✅ Accept', callback_data: `accept_${requestId}` },
-          { text: '❌ Reject', callback_data: `reject_${requestId}` }
+  try {
+    await bot.sendMessage(ADMIN_CHAT_ID, message, {
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: '✅ Accept', callback_data: `accept_${requestId}` },
+            { text: '❌ Reject', callback_data: `reject_${requestId}` }
+          ]
         ]
-      ]
-    }
-  });
+      }
+    });
+  } catch (err) {
+    console.error('Telegram sendMessage error:', err);
+  }
 }
 
 // Handle button presses
@@ -60,3 +64,4 @@ module.exports = {
   getApprovalStatus,
   bot
 };
+
